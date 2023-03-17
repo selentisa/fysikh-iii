@@ -3,7 +3,7 @@ MODULES = ../../modules
 INCLUDE = ../../include
 
 # Compile options. Το -I<dir> λέει στον compiler να αναζητήσει εκεί include files
-CFLAGS = -Wall -Werror -g -I$(INCLUDE)
+CFLAGS = -Wall -Werror -g -I $(INCLUDE)
 
 # Αρχεία .o
 OBJS = minmax.o $(MODULES)/stats.o
@@ -22,3 +22,4 @@ clean:
 
 run: $(EXEC)
 	./$(EXEC) $(ARGS)
+
