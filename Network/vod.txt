@@ -1,0 +1,2 @@
+new Test vod enabled
+setup Test input "C:\Users\evryd\OneDrive\Υπολογιστής\Network\sample.mp4"
