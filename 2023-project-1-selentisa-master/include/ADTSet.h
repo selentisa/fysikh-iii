@@ -13,6 +13,7 @@
 #include "common_types.h"
 
 
+
 // Ενα σύνολο αναπαριστάται από τον τύπο Set
 
 typedef struct set* Set;

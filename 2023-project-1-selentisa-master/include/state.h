@@ -13,7 +13,7 @@ typedef enum {
 
 typedef enum {
 	IDLE, JUMPING, FALLING, MOVING_UP, MOVING_DOWN
-} VerticalMovement;
+} VerticalMovement; 
 
 // Πληροφορίες για κάθε αντικείμενο
 typedef struct object {
