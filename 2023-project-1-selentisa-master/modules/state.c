@@ -237,6 +237,61 @@ void state_update(State state, KeyState keys) {
 		state->info.playing = false;
 	}
 
+
+
+
+
+	/*Κατακόρυφη κίνηση πλατφόρμας ανάλογα με τον τύπο κίνησης στον οποία βρίσκεται (vert_mov):
+
+		Αν κινείται προς τα πάνω (MOVING_UP):
+		Μετακινείται προς τα πάνω τόσα pixels όσα η κατακόρυφη ταχύτητά της.
+		Αν περάσει το SCREEN_HEIGHT/4 αλλάζει σε MOVING_DOWN
+		Αν κινείται προς τα κάτω (MOVING_DOWN):
+		Μετακινείται προς τα κάτω τόσα pixels όσα η κατακόρυφη ταχύτητά της.
+		Αν περάσει τo 3*SCREEN_HEIGHT/4 αλλάζει σε MOVING_UP
+		Αν βρίσκεται σε πτώση (FALLING):
+		Μετακινείται προς τα κάτω 4 pixels */
+ 
+	// Αναζήτηση σε όλα τα Objects του state
+	for (int i = 0; i < vector_size(state->objects); i++) {
+
+	Object obj = vector_get_at(state->objects, i);
+	if(obj->type == PLATFORM){
+
+
+
+
+	if(state->info.ball->vert_mov == IDLE){
+		
+	}
+
+
+
+
+
+
+
+
+	if(obj->vert_mov == MOVING_UP){
+		obj->rect.y -= obj->vert_speed;
+		if(obj->rect.y < SCREEN_HEIGHT/4){
+			obj->vert_mov = MOVING_DOWN;
+		}
+	}
+
+	if(obj->vert_mov == MOVING_DOWN){
+		obj->rect.y += obj->vert_speed;
+		if(obj->rect.y > 3*SCREEN_HEIGHT/4){
+			obj->vert_mov = MOVING_UP;
+		}
+	}
+
+	if(obj->vert_mov == FALLING){
+		obj->rect.y += 4;
+	}
+	}
+	}
+
 }
 
 // Καταστρέφει την κατάσταση state ελευθερώνοντας τη δεσμευμένη μνήμη.

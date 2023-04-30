@@ -335,6 +335,59 @@ void state_update(State state, KeyState keys) {
 		state->info.playing = false;
 	}
 
+
+    	/*Κατακόρυφη κίνηση πλατφόρμας ανάλογα με τον τύπο κίνησης στον οποία βρίσκεται (vert_mov):
+
+		Αν κινείται προς τα πάνω (MOVING_UP):
+		Μετακινείται προς τα πάνω τόσα pixels όσα η κατακόρυφη ταχύτητά της.
+		Αν περάσει το SCREEN_HEIGHT/4 αλλάζει σε MOVING_DOWN
+		Αν κινείται προς τα κάτω (MOVING_DOWN):
+		Μετακινείται προς τα κάτω τόσα pixels όσα η κατακόρυφη ταχύτητά της.
+		Αν περάσει τo 3*SCREEN_HEIGHT/4 αλλάζει σε MOVING_UP
+		Αν βρίσκεται σε πτώση (FALLING):
+		Μετακινείται προς τα κάτω 4 pixels */
+ 
+	
+
+    //Η state_update πρέπει να ενημερώνει μόνο τα αντικείμενα που βρίσκονται σε απόσταση το πολύ 2 οθόνων από τη μπάλα 
+    //(τα υπόλοιπα μπορούν να παραμένουν ακίνητα). Η εύρεση των αντικειμένων δεν πρέπει να εξετάζει όλα τα αντικείμενα της πίστας.
+
+    float x_from = state->info.ball->rect.x - 2*SCREEN_WIDTH;
+    float x_to = state->info.ball->rect.x + 2*SCREEN_WIDTH;
+    List objects = state_objects(state, x_from, x_to);
+    ListNode node = list_first(objects);
+
+    //Για κάθε αντικείμενο της πίστας που βρίσκεται σε απόσταση το πολύ 2 οθόνων από τη μπάλα:
+    while (node != NULL){
+        
+        Object obj = list_node_value(objects, node);
+        	if(obj->type == PLATFORM){
+
+                    if(obj->vert_mov == MOVING_UP){
+                        obj->rect.y -= obj->vert_speed;
+                        if(obj->rect.y < SCREEN_HEIGHT/4){
+                            obj->vert_mov = MOVING_DOWN;
+                        }
+                    }
+
+                    if(obj->vert_mov == MOVING_DOWN){
+                        obj->rect.y += obj->vert_speed;
+                        if(obj->rect.y > 3*SCREEN_HEIGHT/4){
+                            obj->vert_mov = MOVING_UP;
+                        }
+                    }
+
+                    if(obj->vert_mov == FALLING){
+                        obj->rect.y += 4;
+                    }
+        }
+
+        node = list_next(objects, node);
+    }
+
+    
+
+
 }
 
 // Καταστρέφει την κατάσταση state ελευθερώνοντας τη δεσμευμένη μνήμη.
