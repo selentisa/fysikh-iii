@@ -3,16 +3,16 @@ MODULES = ../../modules
 INCLUDE = ../../include
 
 # Compile options. Το -I<dir> λέει στον compiler να αναζητήσει εκεί include files
-CFLAGS = -Wall -Werror -g -I$(INCLUDE)
+CFLAGS = -Wall -Werror -g -I $(INCLUDE)
 
 # Αρχεία .o
-OBJS = generic_max.o, stats.o
+OBJS = generic_max.o $(MODULES)/stats.o
 
 # Το εκτελέσιμο πρόγραμμα
-EXEC = generic_max, stats
+EXEC = generic_max
 
 # Παράμετροι για δοκιμαστική εκτέλεση
-ARGS =
+ARGS = 1 -2 3 52
 
 $(EXEC): $(OBJS)
 	gcc $(OBJS) -o $(EXEC)

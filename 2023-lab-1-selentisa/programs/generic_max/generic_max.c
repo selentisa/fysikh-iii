@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 #include <string.h>
+
+
 #include "stats.h"
 
 
@@ -17,6 +19,7 @@ int compare_strings(Pointer a, Pointer b) {
     char* ia = a;
     char* ib = b;
     int temp = strcmp(ia, ib);
+    printf("temp = %d", temp);
     return temp;       
 }
 
@@ -32,7 +35,9 @@ int main() {
 
     char* s1 = "zzz";
     char* s2 = "aaa";
-	char* max_s = generic_max(&a1, &a2, compare_strings);
+    // call generic_max and return the biggest string
+    char* max_s = generic_max(s1, s2, compare_strings);
 
     printf("max of %s , %s is %s\n", s1, s2, max_s);
+
 }

@@ -1,6 +1,10 @@
 #include <stdlib.h>
 
 #include "state.h"
+#include "ADTList.h"
+#include "raylib.h"
+#include "../include/state.h"
+
 
 // Αρχικοποιεί την κατάσταση το παιχνιδιού
 
@@ -71,3 +75,66 @@ void state_update(State state) {
 		state_init(state);		// επαναφορά στην αρχική κατάσταση
 	}
 }
+
+
+
+StateInfo state_info(State state) {
+    StateInfo state_infos;
+    state_infos->score = state->score;
+    state_infos->playing = state->playing;
+    state_infos->game_over = state->game_over;
+
+
+    return state_infos;
+}
+
+
+List state_objects(State state, float x_from, float x_to) {
+    List objects = list_new();
+    Object ball1 = malloc(sizeof(*ball1));
+    Object ball2 = malloc(sizeof(*ball2));
+    Object platform = malloc(sizeof(*platform));
+    Object star = malloc(sizeof(*star));
+
+    ball1->type = BALL;
+    ball1->rect = (Rectangle) { state->ball1.position.x, state->ball1.position.y, 2 * state->ball1.radius, 2 * state->ball1.radius };
+    ball1->vert_mov = IDLE;
+    ball1->vert_speed = 0;
+    ball1->unstable = false;
+
+    ball2->type = BALL;
+    ball2->rect = (Rectangle) { state->ball2.position.x, state->ball2.position.y, 2 * state->ball2.radius, 2 * state->ball2.radius };
+    ball2->vert_mov = IDLE;
+    ball2->vert_speed = 0;
+    ball2->unstable = false;
+
+    platform->type = PLATFORM;
+    platform->rect = state->character;
+    platform->vert_mov = IDLE;
+    platform->vert_speed = 0;
+    platform->unstable = false;
+
+    star->type = STAR;
+    star->rect = (Rectangle) { 0, 0, 0, 0 };
+    star->vert_mov = IDLE;
+    star->vert_speed = 0;
+    star->unstable = false;
+
+    if (ball1->rect.x >= x_from && ball1->rect.x <= x_to)
+        list_append(objects, ball1);
+    if (ball2->rect.x >= x_from && ball2->rect.x <= x_to)
+        list_append(objects, ball2);
+    if (platform->rect.x >= x_from && platform->rect.x <= x_to)
+        list_append(objects, platform);
+    if (star->rect.x >= x_from && star->rect.x <= x_to)
+        list_append(objects, star);
+
+    free(ball1);
+    free(ball2);
+    free(platform);
+    free(star);
+
+    return objects;
+}
+
+

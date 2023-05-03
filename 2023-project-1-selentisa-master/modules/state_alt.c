@@ -8,12 +8,80 @@
 #include "common_types.h"
 
 
+Pointer set_find_eq_or_greater(Set set, Pointer value){
+
+    
+    if (set_find_node(set, value) != SET_EOF){
+		return set_node_value(set, set_find_node(set, value));
+	} 
+    else {
+        set_insert(set, value);
+        SetNode node = set_find_node(set,value);
+        SetNode last = set_last(set);
+        if(set_node_value(set,node) != set_node_value(set,last)){
+            SetNode greaterNode = set_next(set, node);
+            set_remove(set,value);
+            return set_node_value(set,greaterNode);
+        }
+        else{
+            set_remove(set,value);
+            return NULL;
+        }
+        
+    }
+
+}
+
+
+// Επιστρέφει την μοναδική τιμή του set που είναι ισοδύναμη με value,
+// ή αν δεν υπάρχει, την μεγαλύτερη τιμή του set που είναι μικρότερη
+// από value. Αν δεν υπάρχει καμία τότε επιστρέφει NULL.
+
+Pointer set_find_eq_or_smaller(Set set, Pointer value){
+
+    if (set_find_node(set, value) != SET_EOF) return set_node_value(set, set_find_node(set, value));
+    else {
+        set_insert(set, value);
+        SetNode node = set_find_node(set,value);
+        SetNode first = set_first(set);
+        if(set_node_value(set,node) != set_node_value(set,first)){
+            SetNode lessNode = set_previous(set, node);
+            set_remove(set,value);
+            return set_node_value(set,lessNode);
+        }
+        else{
+            set_remove(set,value);
+            return NULL;
+        }
+        
+    }
+}
+
+
+int compareObjects(Pointer a, Pointer b) {
+    Object obj_a = a;
+    Object obj_b = b;
+    int num_a =  obj_a->rect.x;
+    int num_b =  obj_b->rect.x;
+
+    if (num_a < num_b) {
+        return -1; 
+    } else if (num_a > num_b) {
+        return 1; 
+    } else {
+        return 0; 
+    }
+}
+
+
+
+
 // Οι ολοκληρωμένες πληροφορίες της κατάστασης του παιχνιδιού.
 // Ο τύπος State είναι pointer σε αυτό το struct, αλλά το ίδιο το struct
 // δεν είναι ορατό στον χρήστη.
 
 struct state {
-	Vector objects;			// περιέχει στοιχεία Object (Πλατφόρμες, Αστέρια)
+	Set objects;			// περιέχει στοιχεία Object (Πλατφόρμες, Αστέρια)
 	struct state_info info;	// Γενικές πληροφορίες για την κατάσταση του παιχνιδιού
 	float speed_factor;		// Πολλαπλασιαστής ταχύτητς (1 = κανονική ταχύτητα, 2 = διπλάσια, κλπ)
 };
@@ -65,7 +133,7 @@ static void add_objects(State state, float start_x) {
 			0.6 + 3*(rand()%100)/100,							// ταχύτητα τυχαία στο διάστημα [0.6, 3.6]
 			i > 0 && (rand() % 10) == 0							// το 10% (τυχαία) των πλατφορμών είναι ασταθείς (εκτός από την πρώτη)
 		);
-		vector_insert_last(state->objects, platform);
+		set_insert(state->objects, platform);
 
 		// Στο 50% των πλατφορμών (τυχαία), εκτός της πρώτης, προσθέτουμε αστέρι
 		if(i != 0 && rand() % 2 == 0) {
@@ -78,7 +146,7 @@ static void add_objects(State state, float start_x) {
 				0,										 	// ταχύτητα 0
 				false										// 'unstable' πάντα false για τα αστέρια
 			);
-			vector_insert_last(state->objects, star);
+			set_insert(state->objects, star);
 		}
 
 		start_x = platform->rect.x + platform->rect.width;	// μετακίνηση των επόμενων αντικειμένων προς τα δεξιά
@@ -99,11 +167,12 @@ State state_create() {
 
 	// Δημιουργούμε το vector των αντικειμένων, και προσθέτουμε αντικείμενα
 	// ξεκινώντας από start_x = 0.
-	state->objects = vector_create(0, NULL);
+	state->objects = set_create((CompareFunc)compareObjects, NULL);
 	add_objects(state, 0);
 
 	// Δημιουργούμε την μπάλα τοποθετώντας τη πάνω στην πρώτη πλατφόρμα
-	Object first_platform = vector_get_at(state->objects, 0);
+	SetNode first_platform_node = set_first(state->objects);
+    Object first_platform = set_node_value(state->objects, first_platform_node);
 	state->info.ball = create_object(
 		BALL,
 		first_platform->rect.x,			// x στην αρχή της πλατφόρμας
@@ -132,18 +201,47 @@ StateInfo state_info(State state) {
 
 }
 
+
+
+
 // Επιστρέφει μια λίστα με όλα τα αντικείμενα του παιχνιδιού στην κατάσταση state,
 // των οποίων η συντεταγμένη x είναι ανάμεσα στο x_from και x_to.
 
 List state_objects(State state, float x_from, float x_to) {
 	// Προς υλοποίηση
 	List list = list_create(NULL);
-	for (int i = 0; i < vector_size(state->objects); i++) {
-		Object obj = vector_get_at(state->objects, i);
-		if (obj->rect.x >= x_from && obj->rect.x <= x_to) {
-			list_insert_next(list, list_last(list), obj);
-		}
-	}
+	// for (int i = 0; i < vector_size(state->objects); i++) {
+	// 	Object obj = vector_get_at(state->objects, i);
+	// 	if (obj->rect.x >= x_from && obj->rect.x <= x_to) {
+	// 		list_insert_next(list, list_last(list), obj);
+	// 	}
+	// }
+
+    Object obj = malloc(sizeof(*obj));
+
+    // Αναζήτηση του πρώτου αντικειμένου που έχει x >= x_from
+	obj->rect.x = x_from;
+    Object from = set_find_eq_or_greater(state->objects, obj);
+    SetNode nodeFrom = set_find_node(state->objects, from);
+
+
+
+    // Αναζήτηση του τελευταίου αντικειμένου που έχει x <= x_to
+    obj->rect.x = x_to;
+    Object to = set_find_eq_or_smaller(state->objects, obj);
+    SetNode nodeTo = set_find_node(state->objects, to);
+
+
+    // Προσθήκη των αντικειμένων στη λίστα αναμεσα στα δυο nodeFrom και nodeTo
+
+    SetNode node = nodeFrom;
+    while (node != nodeTo) {
+        Object data = set_node_value(state->objects, node);
+        list_insert_next(list, list_last(list), data);
+        node = set_next(state->objects, node);
+    }
+    
+
 	return list;
 }
 
@@ -238,10 +336,7 @@ void state_update(State state, KeyState keys) {
 	}
 
 
-
-
-
-	/*Κατακόρυφη κίνηση πλατφόρμας ανάλογα με τον τύπο κίνησης στον οποία βρίσκεται (vert_mov):
+    	/*Κατακόρυφη κίνηση πλατφόρμας ανάλογα με τον τύπο κίνησης στον οποία βρίσκεται (vert_mov):
 
 		Αν κινείται προς τα πάνω (MOVING_UP):
 		Μετακινείται προς τα πάνω τόσα pixels όσα η κατακόρυφη ταχύτητά της.
@@ -252,45 +347,46 @@ void state_update(State state, KeyState keys) {
 		Αν βρίσκεται σε πτώση (FALLING):
 		Μετακινείται προς τα κάτω 4 pixels */
  
-	// Αναζήτηση σε όλα τα Objects του state
-	for (int i = 0; i < vector_size(state->objects); i++) {
+	
 
-	Object obj = vector_get_at(state->objects, i);
-	if(obj->type == PLATFORM){
+    //Η state_update πρέπει να ενημερώνει μόνο τα αντικείμενα που βρίσκονται σε απόσταση το πολύ 2 οθόνων από τη μπάλα 
+    //(τα υπόλοιπα μπορούν να παραμένουν ακίνητα). Η εύρεση των αντικειμένων δεν πρέπει να εξετάζει όλα τα αντικείμενα της πίστας.
 
+    float x_from = state->info.ball->rect.x - 2*SCREEN_WIDTH;
+    float x_to = state->info.ball->rect.x + 2*SCREEN_WIDTH;
+    List objects = state_objects(state, x_from, x_to);
+    ListNode node = list_first(objects);
 
+    //Για κάθε αντικείμενο της πίστας που βρίσκεται σε απόσταση το πολύ 2 οθόνων από τη μπάλα:
+    while (node != NULL){
+        
+        Object obj = list_node_value(objects, node);
+        	if(obj->type == PLATFORM){
 
+                    if(obj->vert_mov == MOVING_UP){
+                        obj->rect.y -= obj->vert_speed;
+                        if(obj->rect.y < SCREEN_HEIGHT/4){
+                            obj->vert_mov = MOVING_DOWN;
+                        }
+                    }
 
-	if(state->info.ball->vert_mov == IDLE){
-		
-	}
+                    if(obj->vert_mov == MOVING_DOWN){
+                        obj->rect.y += obj->vert_speed;
+                        if(obj->rect.y > 3*SCREEN_HEIGHT/4){
+                            obj->vert_mov = MOVING_UP;
+                        }
+                    }
 
+                    if(obj->vert_mov == FALLING){
+                        obj->rect.y += 4;
+                    }
+        }
 
+        node = list_next(objects, node);
+    }
 
+    
 
-
-
-
-
-	if(obj->vert_mov == MOVING_UP){
-		obj->rect.y -= obj->vert_speed;
-		if(obj->rect.y < SCREEN_HEIGHT/4){
-			obj->vert_mov = MOVING_DOWN;
-		}
-	}
-
-	if(obj->vert_mov == MOVING_DOWN){
-		obj->rect.y += obj->vert_speed;
-		if(obj->rect.y > 3*SCREEN_HEIGHT/4){
-			obj->vert_mov = MOVING_UP;
-		}
-	}
-
-	if(obj->vert_mov == FALLING){
-		obj->rect.y += 4;
-	}
-	}
-	}
 
 }
 
@@ -302,52 +398,3 @@ void state_destroy(State state) {
 	free(state);
 }
 
-
-Pointer set_find_eq_or_greater(Set set, Pointer value){
-
-    
-    if (set_find_node(set, value) != SET_EOF){
-		return set_node_value(set, set_find_node(set, value));
-	} 
-    else {
-        set_insert(set, value);
-        SetNode node = set_find_node(set,value);
-        SetNode last = set_last(set);
-        if(set_node_value(set,node) != set_node_value(set,last)){
-            SetNode greaterNode = set_next(set, node);
-            set_remove(set,value);
-            return set_node_value(set,greaterNode);
-        }
-        else{
-            set_remove(set,value);
-            return NULL;
-        }
-        
-    }
-
-}
-
-
-// Επιστρέφει την μοναδική τιμή του set που είναι ισοδύναμη με value,
-// ή αν δεν υπάρχει, την μεγαλύτερη τιμή του set που είναι μικρότερη
-// από value. Αν δεν υπάρχει καμία τότε επιστρέφει NULL.
-
-Pointer set_find_eq_or_smaller(Set set, Pointer value){
-
-    if (set_find_node(set, value) != SET_EOF) return set_node_value(set, set_find_node(set, value));
-    else {
-        set_insert(set, value);
-        SetNode node = set_find_node(set,value);
-        SetNode first = set_first(set);
-        if(set_node_value(set,node) != set_node_value(set,first)){
-            SetNode lessNode = set_previous(set, node);
-            set_remove(set,value);
-            return set_node_value(set,lessNode);
-        }
-        else{
-            set_remove(set,value);
-            return NULL;
-        }
-        
-    }
-}
