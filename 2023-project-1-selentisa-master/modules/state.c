@@ -260,14 +260,14 @@ void state_update(State state, KeyState keys) {
 		list_insert_next(platforms, list_last(platforms), obj);
 
 			if(obj->vert_mov == MOVING_UP){
-				obj->rect.y -= obj->vert_speed;
+				obj->rect.y += obj->vert_speed;
 				if(obj->rect.y < SCREEN_HEIGHT/4){
 					obj->vert_mov = MOVING_DOWN;
 				}
 			}
 
 			if(obj->vert_mov == MOVING_DOWN){
-				obj->rect.y += obj->vert_speed;
+				obj->rect.y -= obj->vert_speed;
 				if(obj->rect.y > 3*SCREEN_HEIGHT/4){
 					obj->vert_mov = MOVING_UP;
 				}
@@ -312,11 +312,12 @@ void state_update(State state, KeyState keys) {
 (Προαιρετικά: η αλλαγή σε IDLE μπορεί να γίνεται μόνο αν ο μπάλα πριν τη σύγκρουση βρισκόταν “ψηλότερα” από την πλατφόρμα, δηλαδή η σύγκρουση γίνεται με το “πάνω” μέρος της πλατφόρμας και όχι με το “πλάι” της πλατφόρμας.)
 Για τις συγκρούσεις μπορείτε να χρησιμοποιήσετε (χωρίς να είναι απαραίτητο) τις συναρτήσεις CheckCollisionRecs, CheckCollisionPointRec, ... από το libraylib.h.*/
 */
-				if(CheckCollisionRecs(state->info.ball->rect, obj->rect)){
-					state->info.ball->rect.y = obj->rect.y - state->info.ball->rect.h;
-					state->info.ball->vert_mov = IDLE;
+				if(state->info.ball->rect.x <= obj->rect.x && state->info.ball->rect.x + state->info.ball->rect.w >= obj->rect.x + obj->rect.w){
+					if(state->info.ball->rect.y + state->info.ball->rect.h >= obj->rect.y){
+						state->info.ball->rect.y = obj->rect.y - state->info.ball->rect.h;
+						state->info.ball->vert_mov = IDLE;
+					}
 				}
-			}
 
 	}
 

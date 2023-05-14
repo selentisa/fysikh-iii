@@ -210,18 +210,13 @@ StateInfo state_info(State state) {
 List state_objects(State state, float x_from, float x_to) {
 	// Προς υλοποίηση
 	List list = list_create(NULL);
-	// for (int i = 0; i < vector_size(state->objects); i++) {
-	// 	Object obj = vector_get_at(state->objects, i);
-	// 	if (obj->rect.x >= x_from && obj->rect.x <= x_to) {
-	// 		list_insert_next(list, list_last(list), obj);
-	// 	}
-	// }
 
     Object obj = malloc(sizeof(*obj));
 
     // Αναζήτηση του πρώτου αντικειμένου που έχει x >= x_from
 	obj->rect.x = x_from;
     Object from = set_find_eq_or_greater(state->objects, obj);
+	if(from==NULL) return NULL;
     SetNode nodeFrom = set_find_node(state->objects, from);
 
 
@@ -229,6 +224,7 @@ List state_objects(State state, float x_from, float x_to) {
     // Αναζήτηση του τελευταίου αντικειμένου που έχει x <= x_to
     obj->rect.x = x_to;
     Object to = set_find_eq_or_smaller(state->objects, obj);
+	if(to==NULL) return NULL;
     SetNode nodeTo = set_find_node(state->objects, to);
 
 
@@ -346,6 +342,8 @@ void state_update(State state, KeyState keys) {
 		Αν περάσει τo 3*SCREEN_HEIGHT/4 αλλάζει σε MOVING_UP
 		Αν βρίσκεται σε πτώση (FALLING):
 		Μετακινείται προς τα κάτω 4 pixels */
+
+
  
 	
 
@@ -380,6 +378,22 @@ void state_update(State state, KeyState keys) {
                     if(obj->vert_mov == FALLING){
                         obj->rect.y += 4;
                     }
+
+
+				/*Συμπεριφορά μπάλας σε κατακόρυφη ηρεμία (IDLE) ανάλογα με το αν βρίσκεται πάνω σε πλατφόρμα:
+
+Αν η συντεταγμένη x βρίσκεται στα όρια κάποιας πλατφόρμας τότε η συντεταγμένη y τροποποιείται ώστε η μπάλα να ακολουθεί σε ύψος την πλατφόρμα.
+Αν η συντεταγμένη x δεν βρίσκεται στα όρια καμίας πλατφόρμας τότε η μπάλα μπαίνει σε κατάσταση πτώσης (FALLING) με αρχική ταχύτητα 1.5.*/
+			if(state->info.ball->vert_mov == IDLE){
+				if(obj->rect.x <= state.info.ball->rect.x && state.info.ball->rect.x <= obj->rect.x + obj->rect.w){
+					state->info.ball->rect.y = obj->rect.y - state->info.ball->rect.h;
+					state->info.ball->vert_mov = IDLE;
+				}
+				else{
+					state->info.ball->vert_mov = FALLING;
+					state->info.ball->vert_speed = 1.5;
+				}
+			}
         }
 
         node = list_next(objects, node);
