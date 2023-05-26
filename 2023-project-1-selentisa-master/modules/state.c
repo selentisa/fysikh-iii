@@ -251,46 +251,91 @@ void state_update(State state, KeyState keys) {
 		Αν περάσει τo 3*SCREEN_HEIGHT/4 αλλάζει σε MOVING_UP
 		Αν βρίσκεται σε πτώση (FALLING):
 		Μετακινείται προς τα κάτω 4 pixels */
- 
+	List platforms = list_create(NULL);
 	// Αναζήτηση σε όλα τα Objects του state
 	for (int i = 0; i < vector_size(state->objects); i++) {
 
 	Object obj = vector_get_at(state->objects, i);
 	if(obj->type == PLATFORM){
+		list_insert_next(platforms, list_last(platforms), obj);
 
+			if(obj->vert_mov == MOVING_UP){
+				obj->rect.y += obj->vert_speed;
+				if(obj->rect.y < SCREEN_HEIGHT/4){
+					obj->vert_mov = MOVING_DOWN;
+				}
+			}
 
+			if(obj->vert_mov == MOVING_DOWN){
+				obj->rect.y -= obj->vert_speed;
+				if(obj->rect.y > 3*SCREEN_HEIGHT/4){
+					obj->vert_mov = MOVING_UP;
+				}
+			}
 
-
-	if(state->info.ball->vert_mov == IDLE){
-		
-	}
-
-
-
-
-
-
-
-
-	if(obj->vert_mov == MOVING_UP){
-		obj->rect.y -= obj->vert_speed;
-		if(obj->rect.y < SCREEN_HEIGHT/4){
-			obj->vert_mov = MOVING_DOWN;
-		}
-	}
-
-	if(obj->vert_mov == MOVING_DOWN){
-		obj->rect.y += obj->vert_speed;
-		if(obj->rect.y > 3*SCREEN_HEIGHT/4){
-			obj->vert_mov = MOVING_UP;
-		}
-	}
-
-	if(obj->vert_mov == FALLING){
-		obj->rect.y += 4;
+			if(obj->vert_mov == FALLING){
+				obj->rect.y += 4;
+				// Αν μια πλατφόρμα σε πτώση (FALLING) φτάσει στο κάτω μέρος της οθόνης αφαιρείται από το vector των αντικειμένων.
+				if(obj->rect.y > SCREEN_HEIGHT){
+					vector_remove_at(state->objects, i);
+					list_remove(platforms, obj);
+				}
+			}
 	}
 	}
+
+
+	// Άσκηση 3
+
+	/*Συμπεριφορά μπάλας σε κατακόρυφη ηρεμία (IDLE) ανάλογα με το αν βρίσκεται πάνω σε πλατφόρμα:
+
+Αν η συντεταγμένη x βρίσκεται στα όρια κάποιας πλατφόρμας τότε η συντεταγμένη y τροποποιείται ώστε η μπάλα να ακολουθεί σε ύψος την πλατφόρμα.
+Αν η συντεταγμένη x δεν βρίσκεται στα όρια καμίας πλατφόρμας τότε η μπάλα μπαίνει σε κατάσταση πτώσης (FALLING) με αρχική ταχύτητα 1.5.*/
+
+
+		for(int i = 0; i < list_size(platforms); i++){
+			Object obj = list_node_value(platforms, list_find_node(platforms, state->info.ball->rect.x));
+
+
+			if(state->info.ball->vert_mov == IDLE){
+				if(obj->rect.x <= state.info.ball->rect.x && state.info.ball->rect.x <= obj->rect.x + obj->rect.w){
+					state->info.ball->rect.y = obj->rect.y - state->info.ball->rect.h;
+					state->info.ball->vert_mov = IDLE;
+				}
+				else{
+					state->info.ball->vert_mov = FALLING;
+					state->info.ball->vert_speed = 1.5;
+				}
+			}
+			else if(state->info.ball->vert_mov == FALLING){
+				/*Αν η μπάλα βρίσκεται σε πτώση (FALLING) και συγκρουστεί με πλατφόρμα τότε μετακινείται ακριβώς πάνω στην πλατφόρμα και αλλάζει σε IDLE.
+(Προαιρετικά: η αλλαγή σε IDLE μπορεί να γίνεται μόνο αν ο μπάλα πριν τη σύγκρουση βρισκόταν “ψηλότερα” από την πλατφόρμα, δηλαδή η σύγκρουση γίνεται με το “πάνω” μέρος της πλατφόρμας και όχι με το “πλάι” της πλατφόρμας.)
+Για τις συγκρούσεις μπορείτε να χρησιμοποιήσετε (χωρίς να είναι απαραίτητο) τις συναρτήσεις CheckCollisionRecs, CheckCollisionPointRec, ... από το libraylib.h.*/
+*/
+				if(state->info.ball->rect.x <= obj->rect.x && state->info.ball->rect.x + state->info.ball->rect.w >= obj->rect.x + obj->rect.w){
+					if(state->info.ball->rect.y + state->info.ball->rect.h >= obj->rect.y){
+						state->info.ball->rect.y = obj->rect.y - state->info.ball->rect.h;
+						state->info.ball->vert_mov = IDLE;
+					}
+				}
+
 	}
+
+	/*Συγκρούσεις:
+
+Αν η μπάλα φτάσει στο κάτω μέρος της οθόνης τερματίζει το παιχνίδι. (υλοποιήθηκε)
+Αν η μπάλα συγκρουστεί με αστέρι τότε το αστέρι αφαιρείται από το vector των αντικειμένων και προστίθενται 10 πόντοι στο σκορ.
+Αν μια πλατφόρμα σε πτώση (FALLING) φτάσει στο κάτω μέρος της οθόνης αφαιρείται από το vector των αντικειμένων.  (υλοποιήθηκε)
+Αν η μπάλα βρίσκεται σε πτώση (FALLING) και συγκρουστεί με πλατφόρμα τότε μετακινείται ακριβώς πάνω στην πλατφόρμα και αλλάζει σε IDLE.
+(Προαιρετικά: η αλλαγή σε IDLE μπορεί να γίνεται μόνο αν ο μπάλα πριν τη σύγκρουση βρισκόταν “ψηλότερα” από την πλατφόρμα, δηλαδή η σύγκρουση γίνεται με το “πάνω” μέρος της πλατφόρμας και όχι με το “πλάι” της πλατφόρμας.)
+Για τις συγκρούσεις μπορείτε να χρησιμοποιήσετε (χωρίς να είναι απαραίτητο) τις συναρτήσεις CheckCollisionRecs, CheckCollisionPointRec, ... από το libraylib.h.*/
+
+
+	if(state->info.ball->rect.y >= SCREEN_HEIGHT || state->info.ball->rect.y <= 0){
+		state->info.ball->vert_mov = FALLING;
+	}
+
+	if(state->)
 
 }
 
