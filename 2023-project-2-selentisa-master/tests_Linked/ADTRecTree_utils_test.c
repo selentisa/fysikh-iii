@@ -7,7 +7,10 @@
 
 #include "acutest.h"			// Απλή βιβλιοθήκη για unit testing
 
-#include "ADTRectree.h"
+#include "ADTRecTree.h"
+#include <stdio.h>
+
+
 
 // θέτει τα στοιχεία του πίνακα array  σε τυχαία σειρά
 void shuffle(int* array[], int size) {
@@ -43,6 +46,7 @@ void test_create(void) {
 	TEST_ASSERT(root != NULL);
 
 
+
     // Test rectree_size
     int size = rectree_size(root);
 	TEST_ASSERT(size == 3);
@@ -56,10 +60,28 @@ void test_create(void) {
 
 	TEST_ASSERT(rectree_value(rectree_right(root)) == (int*)16);
 
-	
+    //printf("rectree_value(rectree_right(root)) %d \n ", (int)rectree_value(rectree_right(root)));
+
+
+    // Test rectree_get_subtree
+    RecTree subtree = rectree_get_subtree(root, 0);
+    TEST_ASSERT(subtree != NULL);
+    TEST_ASSERT(rectree_value(subtree) == (int*)3);
+
+
+    // Test rectree_replace_subtree
+    RecTree newSubtree = rectree_create((int*)7, NULL, NULL);
+    RecTree replacedSubtree = rectree_replace_subtree(root, 1, newSubtree);
+    TEST_ASSERT(rectree_value(replacedSubtree) == (int*)3);
+
+
+    TEST_ASSERT(rectree_value(rectree_left(replacedSubtree)) == (int*)7 );
+    TEST_ASSERT(rectree_value(rectree_right(replacedSubtree)) == (int*)16 );
+    TEST_ASSERT(rectree_size(replacedSubtree) == 3);
+    
 
     // Test rectree_destroy
-    rectree_destroy(root);
+    rectree_destroy(replacedSubtree);
 
 
 }	
