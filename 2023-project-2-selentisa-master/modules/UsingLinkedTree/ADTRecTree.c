@@ -61,7 +61,7 @@ void rectree_destroy(RecTree tree) {
 
 Pointer rectree_value(RecTree tree) {
 	if(tree == REC_TREE_EMPTY)
-		return NULL;
+		return NULL;	
 	return tree->value;
 
 }
