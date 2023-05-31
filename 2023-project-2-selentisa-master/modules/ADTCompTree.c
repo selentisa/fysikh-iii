@@ -5,73 +5,77 @@
 
 
 struct comp_tree {
-    RecTree h_tree;
+    Pointer value;
+    RecTree rec_tree;
 };
 
-
-CompTree comp_tree_create(Pointer value, RecTree left, RecTree right, CompareFunc compare) {
-    CompTree tree = malloc(sizeof(*tree));
-    tree->h_tree = rectree_create(value, left, right);
+CompTree comptree_create(Pointer value, CompTree left, CompTree right) {
+    CompTree tree = malloc(sizeof(struct comp_tree));
+    tree->value = value;
+    tree->rec_tree = rectree_create(value, left ? left->rec_tree : REC_TREE_EMPTY, right ? right->rec_tree : REC_TREE_EMPTY);
     return tree;
 }
 
-
-int comp_tree_size(CompTree tree) {
-    return rectree_size(tree->h_tree);
+int comptree_size(CompTree tree) {
+    return rectree_size(tree->rec_tree);
 }
 
-
-void comp_tree_destroy(CompTree tree) {
-    rectree_destroy(tree->h_tree);
+void comptree_destroy(CompTree tree) {
+    rectree_destroy(tree->rec_tree);
     free(tree);
 }
 
-
-Pointer comptree_value(CompTree tree){
-    return rectree_value(tree->h_tree);
+Pointer comptree_value(CompTree tree) {
+    return rectree_value(tree->rec_tree);
 }
 
-CompTree comptree_left(CompTree tree){
-    if (tree->h_tree == REC_TREE_EMPTY) {
-        return NULL;
-    }
-    CompTree left = malloc(sizeof(*left));
-    left->h_tree = rectree_left(tree->h_tree);
+CompTree comptree_left(CompTree tree) {
+    CompTree left = malloc(sizeof(struct comp_tree));
+    left->value = rectree_value(rectree_left(tree->rec_tree));
+    left->rec_tree = rectree_left(tree->rec_tree);
     return left;
 }
 
-CompTree comptree_right(CompTree tree){
-    if (tree->h_tree == REC_TREE_EMPTY) {
-        return NULL;
-    }
-    CompTree right = malloc(sizeof(*right));
-    right->h_tree = rectree_right(tree->h_tree);
+CompTree comptree_right(CompTree tree) {
+    CompTree right = malloc(sizeof(struct comp_tree));
+    right->value = rectree_value(rectree_right(tree->rec_tree));
+    right->rec_tree = rectree_right(tree->rec_tree);
     return right;
 }
 
-Pointer comptree_value(CompTree tree){
-    return rectree_value(tree->h_tree);
-}
-
-
 CompTree comptree_insert_last(CompTree tree, Pointer value) {
-    if (tree->h_tree == REC_TREE_EMPTY) {
-        return comp_tree_create(value, REC_TREE_EMPTY, REC_TREE_EMPTY, NULL);
-    }
-    int size = comp_tree_size(tree);
-    int pos = size + 1;
-    RecTree subtree = rectree_create(value, REC_TREE_EMPTY, REC_TREE_EMPTY);
-    tree->h_tree = rectree_replace_subtree(tree->h_tree, pos, subtree);
-    return tree;
+    int size = comptree_size(tree);
+    int pos = size;
+    RecTree subtree = comptree_get_subtree(tree, pos);
+    RecTree newSubtree = rectree_create(value, REC_TREE_EMPTY, REC_TREE_EMPTY);
+    RecTree updatedTree = rectree_replace_subtree(tree->rec_tree, pos, newSubtree);
+    comptree_destroy(tree);
+    CompTree newTree = malloc(sizeof(struct comp_tree));
+    newTree->value = rectree_value(updatedTree);
+    newTree->rec_tree = updatedTree;
+    return newTree;
 }
-
 
 CompTree comptree_remove_last(CompTree tree) {
-    if (tree->h_tree == REC_TREE_EMPTY) {
-        return NULL;
-    }
-    int size = comp_tree_size(tree);
-    int pos = size;
-    tree->h_tree = rectree_replace_subtree(tree->h_tree, pos, REC_TREE_EMPTY);
-    return tree;
+    int size = comptree_size(tree);
+    int pos = size - 1;
+    RecTree updatedTree = rectree_replace_subtree(tree->rec_tree, pos, REC_TREE_EMPTY);
+    comptree_destroy(tree);
+    CompTree newTree = malloc(sizeof(struct comp_tree));
+    newTree->value = rectree_value(updatedTree);
+    newTree->rec_tree = updatedTree;
+    return newTree;
+}
+
+RecTree comptree_get_subtree(CompTree tree, int pos) {
+    return rectree_get_subtree(tree->rec_tree, pos);
+}
+
+CompTree comptree_replace_subtree(CompTree tree, int pos, CompTree subtree) {
+    RecTree newSubtree = subtree ? subtree->rec_tree : REC_TREE_EMPTY;
+    RecTree updatedTree = rectree_replace_subtree(tree->rec_tree, pos, newSubtree);
+    CompTree newTree = malloc(sizeof(struct comp_tree));
+    newTree->value = rectree_value(updatedTree);
+    newTree->rec_tree = updatedTree;
+    return newTree;
 }
